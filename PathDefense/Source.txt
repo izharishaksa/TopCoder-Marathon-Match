@@ -1,0 +1,506 @@
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.PriorityQueue;
+import java.util.Random;
+import java.util.Scanner;
+
+/**
+ *
+ * @author izharishaksa
+ */
+public class PathDefense {
+
+    long START;
+    int TIMEOUT = 18800;
+    int STEP;
+    int SIZE;
+    int[][] board;
+    int CREEP_HEALTH;
+    int CREEP_MONEY;
+    int money;
+    final int MAX_WAVES = 15;
+    final int MIN_CREEPS = 500;
+    final int MAX_CREEPS = 2000;
+    TowerType[] towerTypes;
+    List<Base> bases;
+    Creep[] creeps;
+    Cell[] towers;
+    List<Cell> paths;
+    List<Cell> boundary;
+    int tipe;
+    int towerId;
+
+    List<Tower> placedTowers;
+
+    public int init(String[] b, int money, int creepHealth, int creepMoney, int[] towerTypes) {
+        debug();
+        START = System.nanoTime();
+        this.SIZE = b.length;
+        this.bases = new ArrayList<>();
+        this.paths = new ArrayList<>();
+        this.boundary = new ArrayList<>();
+        this.money = money;
+        this.CREEP_HEALTH = creepHealth;
+        this.CREEP_MONEY = creepMoney;
+        this.STEP = 0;
+        this.towerId = 0;
+        this.board = new int[SIZE][SIZE];
+        this.placedTowers = new ArrayList<>();
+        this.creeps = new Creep[2001];
+
+        //Init board, path, base and boundary
+        for (int i = 0; i < SIZE; i++) {
+            for (int j = 0; j < SIZE; j++) {
+                char c = b[i].charAt(j);
+                board[i][j] = c >= '0' && c <= '9' ? (c - '0') : (c == '.' ? 10 : -1000);
+                if (c >= '0' && c <= '9') {
+                    bases.add(new Base(c - '0', 1000, i, j));
+                }
+                if (c == '.') {
+                    paths.add(new Cell(i, j));
+                    if (i == 0 || i == SIZE - 1 || j == 0 || j == SIZE - 1) {
+                        boundary.add(new Cell(i, j));
+                    }
+                }
+            }
+        }
+        //Init towerTypes
+        this.towerTypes = new TowerType[towerTypes.length / 3];
+        int maxRange = 0;
+        for (int i = 0; i < towerTypes.length / 3; i++) {
+            this.towerTypes[i] = new TowerType(i, towerTypes[i * 3], towerTypes[i * 3 + 1], towerTypes[i * 3 + 2]);
+            if (towerTypes[i * 3] > maxRange) {
+                maxRange = towerTypes[i * 3];
+            }
+        }
+
+        //Init cell which is possible to put towers
+        List<Cell> temp = new ArrayList<>();
+        for (int i = 0; i < SIZE; i++) {
+            for (int j = 0; j < SIZE; j++) {
+                if (board[i][j] != -1000) {
+                    continue;
+                }
+                int count = 0;
+                for (Cell c : paths) {
+                    if (((c.row - i) * (c.row - i)) + ((c.col - j) * (c.col - j)) <= maxRange * maxRange) {
+                        count++;
+                    }
+                }
+                if (count > 0) {
+                    Cell cell = new Cell(i, j);
+                    cell.dist = countDist(i, j);
+                    temp.add(cell);
+                }
+            }
+        }
+        this.towers = new Cell[temp.size()];
+        for (int i = 0; i < temp.size(); i++) {
+            Cell c = temp.get(i);
+            towers[i] = new Cell(c.row, c.col);
+        }
+
+        Arrays.sort(towers, new Comparator<Cell>() {
+
+            @Override
+            public int compare(Cell o1, Cell o2) {
+                return o1.dist - o2.dist;
+            }
+
+        });
+        return 7;
+    }
+
+    int countDist(int i, int j) {
+        int ret = Integer.MAX_VALUE;
+        for (Cell c : boundary) {
+            ret = Math.min(ret, Math.abs(c.row - i) + Math.abs(c.col - j));
+        }
+        return ret;
+    }
+
+    boolean inRange(int a, int b, int c, int d, int range) {
+        return (a - c) * (a - c) + (b - d) * (b - d) <= range * range;
+    }
+
+    int countRange(int a, int b, int c, int d) {
+        return ((a - c) * (a - c)) + ((b - d) * (b - d));
+    }
+
+    int attack(Tower t, int id) {
+        TowerType type = towerTypes[t.type];
+        if (creeps[id] != null) {
+            creeps[id].health -= type.damage;
+            if (creeps[id].health < 1) {
+                creeps[id] = null;
+            }
+        }
+        return 0;
+    }
+
+    //fixed this, nearest first
+    int attack(Tower t) {
+        TowerType type = towerTypes[t.type];
+        int minRange = type.range * type.range;
+        int id = -1;
+        for (Creep c : creeps) {
+            if (c != null) {
+                int cur = countRange(t.row, t.col, c.row, c.col);
+                if (cur <= minRange) {
+                    minRange = cur;
+                    id = c.id;
+                }
+            }
+        }
+        if (id != -1) {
+            //System.err.println(t.id + "(" + t.row + "," + t.col + ") => " + id + "(" + creeps[id].row + "," + creeps[id].col + ")");
+            creeps[id].health -= type.damage;
+            if (creeps[id].health < 1) {
+                creeps[id] = null;
+            }
+        }
+        return 0;
+    }
+
+    int[] tempId;
+
+    Tower score(Cell cell, TowerType type) {
+        Tower ret = null;
+        int range = type.range;
+        int a = cell.row - type.range + 1;
+        a = a >= 0 ? a : 0;
+        int b = cell.col - type.range + 1;
+        b = b >= 0 ? b : 0;
+        int c = cell.row + type.range - 1;
+        c = c < SIZE ? c : SIZE - 1;
+        int d = cell.col + type.range - 1;
+        d = d < SIZE ? d : SIZE - 1;
+        int score = 0, attackCreep = -1;
+        int minRange = type.range * type.range;
+        for (int i = 0; i < tempId.length; i++) {
+            Creep creep = creeps[tempId[i]];
+            if (creep != null && !creep.cover) {
+                int curRange = countRange(cell.row, cell.col, creep.row, creep.col);
+                if (curRange <= minRange) {
+                    minRange = curRange;
+                    attackCreep = creep.id;
+                }
+            }
+        }
+        if (attackCreep != -1) {
+            if (creeps[attackCreep].health - type.damage < 1) {
+                score += 1000;
+            } else {
+                score += CREEP_HEALTH - creeps[attackCreep].health - type.damage;
+            }
+            for (int i = a; i <= c; i++) {
+                for (int j = b; j <= d; j++) {
+                    if (board[i][j] == 10 && inRange(cell.row, cell.col, i, j, type.range)) {
+                        score++;
+                    }
+                }
+            }
+            score += 40 - type.cost;
+            score += type.damage;
+            ret = new Tower(-1, type.id, cell.row, cell.col);
+            ret.aCreep = attackCreep;
+            ret.score = score;
+        }
+        return ret;
+    }
+
+    Creep[] nextCreeps;
+
+    int nextAttack(Tower t) {
+        TowerType type = towerTypes[t.type];
+        int minRange = type.range * type.range;
+        int id = -1;
+        for (Creep c : nextCreeps) {
+            if (c != null) {
+                int cur = countRange(t.row, t.col, c.row, c.col);
+                if (cur <= minRange) {
+                    minRange = cur;
+                    id = c.id;
+                }
+            }
+        }
+        if (id != -1) {
+            creeps[id].cover = true;
+        }
+        return 0;
+    }
+
+    public int[] placeTowers(int[] creep, int money, int[] baseHealth) {
+        //System.err.println("Step: " + STEP++);
+        STEP++;
+        /*if (System.nanoTime() - START > TIMEOUT * 1000000) {
+         System.err.println(STEP);
+         }
+         if (creep.length == 0 || System.nanoTime() - START > TIMEOUT * 1000000) {
+         return new int[0];
+         }*/
+        if (creep.length == 0) {
+            return new int[0];
+        }
+        if (STEP % 500 == 0) {
+            this.CREEP_HEALTH *= 2;
+        }
+        tempId = new int[creep.length / 4];
+        //Set the creeps
+        for (int i = 0, j = 0; i < creep.length; i += 4) {
+            int id = creep[i];
+            int health = creep[i + 1];
+            int col = creep[i + 2];
+            int row = creep[i + 3];
+            if (creeps[id] == null) {
+                creeps[id] = new Creep(id, row, col, health);
+            } else {
+                creeps[id].row = row;
+                creeps[id].col = col;
+                creeps[id].health = health;
+                creeps[id].cover = false;
+            }
+            tempId[j++] = creep[i];
+        }
+
+        //Creeps attack the base
+        for (Base base : bases) {
+            for (int i = 0; i < tempId.length; i++) {
+                Creep c = creeps[tempId[i]];
+                if (c != null) {
+                    if (c.row == base.row && c.col == base.col) {
+                        base.health -= c.health;
+                        creeps[tempId[i]] = null;
+                    }
+                }
+            }
+        }
+
+        //Placed towers attack creeps
+        //If still in range don't add new towers        
+        for (Tower t : placedTowers) {
+            attack(t);
+        }
+        nextCreeps = new Creep[2001];
+        /*for (int i = 0; i < 2001; i++) {
+         if (creeps[i] != null) {
+         boolean ok = false;
+         int curRow = creeps[i].row;
+         int curCol = creeps[i].col;                
+         }
+         }*/
+        Random rand = new Random();
+        int next = rand.nextInt(4);
+        for (int i = 0; i < 2001; i++) {
+            if (creeps[i] != null) {
+                boolean ok = false;
+                int curRow = creeps[i].row;
+                int curCol = creeps[i].col;
+                int nextRow = 0;
+                int nextCol = 0;
+                do {
+                    if (next == 0) {
+                        nextRow = curRow - 1;
+                        nextCol = curCol;
+                    } else if (next == 1) {
+                        nextRow = curRow;
+                        nextCol = curCol + 1;
+                    } else if (next == 2) {
+                        nextRow = curRow + 1;
+                        nextCol = curCol;
+                    } else {
+                        nextRow = curRow;
+                        nextCol = curCol - 1;
+                    }
+                    if (nextRow >= 0 && nextRow < SIZE && nextCol >= 0 && nextCol < SIZE && board[nextRow][nextCol] == 10) {
+                        ok = true;
+                    }
+                    next++;
+                    next %= 4;
+                } while (!ok);
+                nextCreeps[i] = new Creep(creeps[i].id, nextRow, nextCol, creeps[i].health);
+                nextCreeps[i].cover = false;
+            }
+        }
+        for (Tower t : placedTowers) {
+            nextAttack(t);
+        }
+
+        //Place new towers
+        List<Integer> list = new ArrayList<>();
+        boolean ok;
+        do {
+            PriorityQueue<Tower> pq = new PriorityQueue<>();
+            for (int i = 0; i < towers.length; i++) {
+                Cell t = towers[i];
+                if (board[t.row][t.col] == -1000) {
+                    for (int j = 0; j < towerTypes.length; j++) {
+                        TowerType tTypes = towerTypes[j];
+                        if (towerTypes[j].cost <= money) {
+                            Tower newTower = score(t, tTypes);
+                            if (newTower != null && newTower.aCreep > 0) {
+                                pq.add(newTower);
+                            }
+                        }
+                    }
+                }
+            }
+
+            ok = false;
+            while (!pq.isEmpty()) {
+                Tower cur = pq.poll();
+                if (cur.score > 0 && board[cur.row][cur.col] == -1000 && money >= towerTypes[cur.type].cost) {
+                    list.add(cur.col);
+                    list.add(cur.row);
+                    list.add(cur.type);
+                    board[cur.row][cur.col] = cur.type + 11;
+                    money -= towerTypes[cur.type].cost;
+                    placedTowers.add(cur);
+                    attack(cur, cur.aCreep);
+                    //System.err.println(cur.toString());
+                    break;
+                }
+            }
+        } while (ok);
+        //System.err.println("Place Tower: " + (System.currentTimeMillis() - CUR));
+
+        int[] ret = new int[list.size()];
+        for (int i = 0; i < ret.length; i++) {
+            ret[i] = list.get(i);
+        }
+        //System.err.println("Total tower: " + list.size() / 3);
+        return ret;
+    }
+
+    void debug() {
+        try {
+            PrintStream console = System.err;
+            File file = new File("log.txt");
+            FileOutputStream fos = new FileOutputStream(file);
+            PrintStream ps = new PrintStream(fos);
+            System.setErr(ps);
+        } catch (Exception e) {
+        }
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int N = sc.nextInt();
+        int money = sc.nextInt();
+        sc.nextLine();
+        String[] board = new String[N];
+        for (int i = 0; i < N; i++) {
+            board[i] = sc.nextLine();
+        }
+        int creepHealth = sc.nextInt();
+        int creepMoney = sc.nextInt();
+        int NT = sc.nextInt();
+        int[] towerTypes = new int[NT];
+        for (int i = 0; i < NT; i++) {
+            towerTypes[i] = sc.nextInt();
+        }
+        PathDefense pd = new PathDefense();
+        pd.init(board, money, creepHealth, creepMoney, towerTypes);
+        for (int i = 0; i < 2000; i++) {
+            money = sc.nextInt();
+            int NC = sc.nextInt();
+            int[] creep = new int[NC];
+            for (int j = 0; j < creep.length; j++) {
+                creep[j] = sc.nextInt();
+            }
+            int B = sc.nextInt();
+            int[] baseHealth = new int[B];
+            for (int j = 0; j < baseHealth.length; j++) {
+                baseHealth[j] = sc.nextInt();
+            }
+            int[] ret = pd.placeTowers(creep, money, baseHealth);
+            System.out.println(ret.length);
+            for (int res : ret) {
+                System.out.println(res);
+            }
+            System.out.flush();
+        }
+    }
+
+}
+
+class Creep {
+
+    int id, row, col, health;
+    boolean cover;
+
+    public Creep(int id, int row, int col, int health) {
+        this.id = id;
+        this.row = row;
+        this.col = col;
+        this.health = health;
+    }
+
+}
+
+class Tower implements Comparable<Tower> {
+
+    int id, type, row, col, score, dist, aCreep;
+
+    public Tower(int id, int type, int row, int col) {
+        this.id = id;
+        this.type = type;
+        this.row = row;
+        this.col = col;
+    }
+
+    @Override
+    public int compareTo(Tower o) {
+        return o.score - score;
+    }
+
+    @Override
+    public String toString() {
+        return id + " => " + row + "," + col + " : " + type + " score = " + score;
+    }
+}
+
+class Base {
+
+    int id, health, row, col;
+
+    public Base(int id, int health, int row, int col) {
+        this.id = id;
+        this.health = health;
+        this.row = row;
+        this.col = col;
+    }
+}
+
+class TowerType {
+
+    int id, range, damage, cost;
+
+    public TowerType(int id, int range, int damage, int cost) {
+        this.id = id;
+        this.range = range;
+        this.damage = damage;
+        this.cost = cost;
+    }
+}
+
+class Cell {
+
+    int row, col, dist;
+    List<Integer> creepId;
+
+    public Cell(int row, int col) {
+        this.row = row;
+        this.col = col;
+    }
+
+    void reset() {
+        this.creepId = new ArrayList<>();
+    }
+}

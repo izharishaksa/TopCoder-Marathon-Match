@@ -1,0 +1,7 @@
+================
+Best Score: 2224
+N: 87
+MoveCount: 108
+Found: 5
+Total Iterasi: 3965
+Unprocessed: 7227

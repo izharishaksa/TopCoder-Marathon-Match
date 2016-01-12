@@ -1,0 +1,218 @@
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Scanner;
+
+/**
+ *
+ * @author izharishaksa
+ */
+public class MovingNQueens {
+
+    static final long TIME_OUT = 9700;
+    static final long START_TIME = System.nanoTime();
+    int N, MAX_MOVES;
+    int[][] dirCursor = new int[][]{{1, 0}, {1, 1}, {0, 1}, {-1, 1}, {-1, 0}, {-1, -1}, {0, -1}, {1, -1}};
+
+    int chebyshev(int row1, int row2, int col1, int col2) {
+        return Math.max(Math.abs(row2 - row1), Math.abs(col2 - col1));
+    }
+
+    boolean isValidMove(int dr, int dc) {
+        return dr == dc || dr == -dc;
+    }
+
+    public String[] rearrange(int[] row, int[] col) {
+        log();
+        N = row.length;
+        MAX_MOVES = 8 * N;
+
+        Queen[] queens = new Queen[N];
+        for (int i = 0; i < N; i++) {
+            queens[i] = new Queen(i, row[i], col[i], 0);
+        }
+
+        List<String> ret = new ArrayList<String>();
+        int curMoves = 0;
+        while (curMoves < MAX_MOVES) {
+            for (int i = 0; i < N; i++) {
+                for (int j = i + 1; j < N; j++) {
+                    if (queens[i].row == queens[j].row || queens[i].col == queens[j].col
+                            || Math.abs(queens[i].row - queens[j].row) == Math.abs(queens[i].col - queens[j].row)) {
+                        queens[i].threats++;
+                        queens[j].threats++;
+                    }
+                }
+            }
+            Arrays.sort(queens);
+            int index = -1;
+            int bestThreats = Integer.MAX_VALUE;
+            double bestScore = Integer.MAX_VALUE;
+            int nextRow = -1;
+            int nextCol = -1;
+
+            boolean ok = false;
+            for (int i = 0; i < N && !ok; i++) {
+                int threaten = queens[i].threats;
+                if (threaten == 0) {
+                    continue;
+                }
+                int curRow = queens[i].row;
+                int curCol = queens[i].col;
+
+                int move = 1;
+                boolean[] canMove = new boolean[8];
+                Arrays.fill(canMove, true);
+                do {
+                    for (int j = 0; j < 8; j++) {
+                        if (!canMove[j]) {
+                            continue;
+                        }
+                        int candidateRow = curRow + (move * dirCursor[j][0]);
+                        int candidateCol = curCol + (move * dirCursor[j][1]);
+                        int nThreats = 0;
+                        for (int k = 0; k < N && canMove[j]; k++) {
+                            if (i == k) {
+                                continue;
+                            }
+                            nThreats += isValidMove(candidateRow - row[k], candidateCol - col[k]) ? 1 : 0;
+                            nThreats += candidateRow == row[k] ? 1 : 0;
+                            nThreats += candidateCol == col[k] ? 1 : 0;
+                            if (candidateRow == row[k] && candidateCol == col[k]) {
+                                canMove[j] = false;
+                            }
+                        }
+                        if (canMove[j] && nThreats < bestThreats) {
+                            bestThreats = nThreats;
+                            bestScore = 1. * move / threaten;
+                            index = i;
+                            nextRow = candidateRow;
+                            nextCol = candidateCol;
+                        } else if (canMove[j] && nThreats == bestThreats && move / threaten < bestScore) {
+                            bestScore = 1. * move / threaten;
+                            index = i;
+                            nextRow = candidateRow;
+                            nextCol = candidateCol;
+                        }
+                        if (canMove[j] && nThreats == 0) {
+                            ok = true;
+                        }
+                    }
+                } while (!ok && move++ < MAX_MOVES);
+            }
+            if (index != -1) {
+                System.err.println(index + " => " + row[index] + "," + col[index] + " => " + nextRow + "," + nextCol + " = " + bestThreats + " : " + bestScore);
+                row[index] = nextRow;
+                col[index] = nextCol;
+                ret.add(index + " " + nextRow + " " + nextCol);
+                curMoves++;
+            } else {
+                break;
+            }
+        }
+
+        /*
+         State best = null;
+         State init = new State(0, MAX_MOVES, new ArrayList<Move>(), queens);
+         PriorityQueue<State> q = new PriorityQueue<State>();
+         q.add(init);
+         while (!q.isEmpty() && System.nanoTime() - START_TIME < TIME_OUT * 1000000) {
+         State cur = q.poll();
+
+         }
+
+         String[] ret = new String[best.moves.size()];
+         for (int i = 0; i < ret.length; i++) {
+         Move m = best.moves.get(i);
+         ret[i] = m.index + " " + m.row + " " + m.col;
+         }*/
+        for (int i = 0; i < N; i++) {
+            System.err.println(row[i] + "," + col[i]);
+        }
+        return ret.toArray(new String[0]);
+    }
+
+    void log() {
+        try {
+            PrintStream console = System.err;
+            File file = new File("log.txt");
+            FileOutputStream fos = new FileOutputStream(file);
+            PrintStream ps = new PrintStream(fos);
+            System.setErr(ps);
+        } catch (Exception e) {
+        }
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int n = sc.nextInt();
+        int[] row = new int[n];
+        for (int i = 0; i < n; i++) {
+            row[i] = sc.nextInt();
+        }
+        int m = sc.nextInt();
+        int[] col = new int[m];
+        for (int i = 0; i < m; i++) {
+            col[i] = sc.nextInt();
+        }
+        MovingNQueens mnq = new MovingNQueens();
+        String[] ret = mnq.rearrange(row, col);
+        System.out.println(ret.length);
+        for (int i = 0; i < ret.length; i++) {
+            System.out.println(ret[i]);
+        }
+        System.out.flush();
+    }
+}
+
+class State implements Comparable<State> {
+
+    int score;
+    int moveNumber;
+    List<Move> moves = new ArrayList<Move>();
+    Queen[] queens;
+
+    public State(int score, int moveNumber, List<Move> moves, Queen[] queens) {
+        this.queens = queens;
+        this.score = score;
+        this.moveNumber = moveNumber;
+        this.moves = moves;
+    }
+
+    @Override
+    public int compareTo(State o) {
+        return this.score - o.score;
+    }
+}
+
+class Queen implements Comparable<Queen> {
+
+    int row, col, index, threats;
+
+    public Queen(int index, int row, int col, int threats) {
+        this.index = index;
+        this.row = row;
+        this.col = col;
+        this.threats = threats;
+    }
+
+    @Override
+    public int compareTo(Queen o) {
+        return threats - o.threats;
+    }
+}
+
+class Move {
+
+    int index, row, col;
+
+    public Move(int index, int row, int col) {
+        this.index = index;
+        this.row = row;
+        this.col = col;
+    }
+}

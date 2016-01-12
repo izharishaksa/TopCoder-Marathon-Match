@@ -1,0 +1,101 @@
+package snowcleaning;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+/**
+ *
+ * @author Izhari Ishak Aksa
+ */
+public class SnowCleaning {
+
+    long start;
+    int boardSize;
+    int salary;
+    int snowFine;
+    int workersNumbers;
+    Worker[] workers;
+    int[] snowFalls;
+    int[][] numOfWorkers;
+    boolean[][] haveSnow;
+    List<String> result;
+
+    public int init(int boardSize, int salary, int snowFine) {
+        this.start = System.currentTimeMillis();
+        this.boardSize = boardSize;
+        this.salary = salary;
+        this.snowFine = snowFine;
+        this.haveSnow = new boolean[boardSize][boardSize];
+        this.workers = new Worker[101];
+        this.workersNumbers = 0;
+        for (int i = 0; i < boardSize; i++) {
+            for (int j = 0; j < boardSize; j++) {
+                haveSnow[i][j] = false;
+            }
+        }
+        numOfWorkers = new int[boardSize][boardSize];
+
+        return 7;
+    }
+
+    void setup() {
+        result = new ArrayList<String>();
+        for (int i = 0; i < snowFalls.length; i += 2) {
+            haveSnow[snowFalls[i]][snowFalls[i + 1]] = true;
+        }
+        for (int i = 0; i < workers.length; i++) {
+            try {
+                workers[i].move = false;
+            } catch (Exception e) {
+            }
+        }
+    }
+
+    public String[] nextDay(int[] snowFalls) {
+        this.snowFalls = snowFalls;
+        this.setup();
+
+        if (snowFalls.length > 0 && workersNumbers < 100) {
+        }
+
+        return result.toArray(new String[]{});
+    }
+
+    public static void main(String[] args) throws Exception {
+        Scanner sc = new Scanner(System.in);
+        int boardSize = sc.nextInt();
+        int salary = sc.nextInt();
+        int snowFine = sc.nextInt();
+        SnowCleaning snowCleaning = new SnowCleaning();
+        snowCleaning.init(boardSize, salary, snowFine);
+
+        for (int i = 0; i < 2000; i++) {
+            int count = sc.nextInt();
+            int[] snowFalls = new int[2 * count];
+            for (int j = 0; j < 2 * count; j++) {
+                snowFalls[j] = sc.nextInt();
+            }
+            String[] ret = snowCleaning.nextDay(snowFalls);
+            System.out.println(ret.length);
+            for (int j = 0; j < ret.length; j++) {
+                System.out.println(ret[j]);
+            }
+            System.out.flush();
+        }
+    }
+}
+
+class Worker implements Comparable<Worker> {
+
+    int id;
+    boolean move;
+
+    public Worker() {
+    }
+
+    @Override
+    public int compareTo(Worker worker) {
+        return -1;
+    }
+}

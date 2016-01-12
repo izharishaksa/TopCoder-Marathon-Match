@@ -1,0 +1,3 @@
+Score awal: 1
+Usage Time: 19351
+Score: 11498

@@ -1,5 +1,7 @@
-/.idea
-/nbproject
-/dist
-/build
+*/.idea
+*/nbproject
+*/dist
+*/build
 *.bat
+*.xml
+*.txt

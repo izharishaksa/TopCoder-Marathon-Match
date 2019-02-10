@@ -1,5 +1,0 @@
-Worker
-snowcleaning.Worker
-SnowCleaning
-snowcleaning.SnowCleaning
-snowcleaning.Path

@@ -5,3 +5,5 @@
 *.bat
 *.xml
 *.txt
+.idea/*
+.gitignore

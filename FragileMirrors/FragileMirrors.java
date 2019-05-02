@@ -1,20 +1,16 @@
-package fragilemirrors;
+package FragileMirrors;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.PriorityQueue;
-import java.util.Scanner;
+import java.util.*;
 
 /**
- *
  * @author Izhari Ishak Aksa
  */
 public class FragileMirrors {
 
+    final long START = System.currentTimeMillis();
     byte size;
     short bestId;
     byte[][] board, bestBoard, temp, nodeRC;
@@ -23,9 +19,24 @@ public class FragileMirrors {
     int[][] expected;
     boolean isLast = false;
     int best = Integer.MIN_VALUE;
-    final long START = System.currentTimeMillis();
     boolean[] skip;
     ArrayList<Short> node;
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int n = Integer.parseInt(sc.nextLine());
+        String[] board = new String[n];
+        for (int i = 0; i < n; i++) {
+            board[i] = sc.nextLine();
+        }
+        FragileMirrors fm = new FragileMirrors();
+        int[] ret = fm.destroy(board);
+        System.out.println(ret.length);
+        for (int i = 0; i < ret.length; i++) {
+            System.out.println(ret[i]);
+        }
+        System.out.flush();
+    }
 
     byte[][] getCopy() {
         byte[][] ret = new byte[size][size];
@@ -418,22 +429,6 @@ public class FragileMirrors {
             System.setErr(ps);
         } catch (Exception e) {
         }
-    }
-
-    public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-        int n = Integer.parseInt(sc.nextLine());
-        String[] board = new String[n];
-        for (int i = 0; i < n; i++) {
-            board[i] = sc.nextLine();
-        }
-        FragileMirrors fm = new FragileMirrors();
-        int[] ret = fm.destroy(board);
-        System.out.println(ret.length);
-        for (int i = 0; i < ret.length; i++) {
-            System.out.println(ret[i]);
-        }
-        System.out.flush();
     }
 }
 

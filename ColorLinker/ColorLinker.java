@@ -1,28 +1,53 @@
+package ColorLinker;
 
-import java.io.*;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.*;
 
 /**
- *
  * @author Izhari Ishak Aksa
  */
 public class ColorLinker {
 
     static final long TIME_OUT = 9500, TIME_OUT2 = 9750;
     static final long START_TIME = System.nanoTime();
+    static final int[] dirRow = new int[]{1, -1, 0, 0};
+    static final int[] dirCol = new int[]{0, 0, 1, -1};
     static int[][][] board, group, bestBoard, blankBoard;
     static HashMap<Integer, Integer> cellPosInArr;
     static int[][] initial;
     static int[] nColors;
-    static final int[] dirRow = new int[]{1, -1, 0, 0};
-    static final int[] dirCol = new int[]{0, 0, 1, -1};
     static Cell[] cells;
     static int N, score = Integer.MAX_VALUE, penalty;
     static boolean[] hapusArr;
     static int[][] arrCost;
     static int[] penScore = new int[6];
+    PriorityQueue<Path> pathList = new PriorityQueue<Path>();
+    int[] colorSeq;
+    boolean noPenalty = true;
+    LinkedList<Integer> rowList = new LinkedList<Integer>();
+    LinkedList<Integer> colList = new LinkedList<Integer>();
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int gridSize = Integer.parseInt(sc.nextLine());
+        int penalty = Integer.parseInt(sc.nextLine());
+        String[] grid = new String[gridSize];
+        for (int i = 0; i < gridSize; i++) {
+            grid[i] = sc.nextLine();
+        }
+        ColorLinker cl = new ColorLinker();
+        int[] ret = cl.link(grid, penalty);
+        System.out.println(ret.length);
+        for (int i = 0; i < ret.length; i++) {
+            System.out.println(ret[i]);
+        }
+        System.out.flush();
+    }
 
     final void init(String[] grid, int penalty) {
         N = grid.length;
@@ -140,7 +165,6 @@ public class ColorLinker {
         }
         return ret;
     }
-    PriorityQueue<Path> pathList = new PriorityQueue<Path>();
 
     final void trace(Cell cell, int sourceGroup) {
         for (int i = 0; i < N; i++) {
@@ -212,8 +236,6 @@ public class ColorLinker {
             }
         }
     }
-    int[] colorSeq;
-    boolean noPenalty = true;
 
     final void initialPlacement() {
         colorSeq = new int[5];
@@ -257,8 +279,6 @@ public class ColorLinker {
             }
         }
     }
-    LinkedList<Integer> rowList = new LinkedList<Integer>();
-    LinkedList<Integer> colList = new LinkedList<Integer>();
 
     final void removeIntersection(int row, int col, int color) {
         rowList.clear();
@@ -553,7 +573,7 @@ public class ColorLinker {
     boolean next_permutation(int[] p) {
         for (int a = p.length - 2; a >= 0; --a) {
             if (p[a] < p[a + 1]) {
-                for (int b = p.length - 1;; --b) {
+                for (int b = p.length - 1; ; --b) {
                     if (p[b] > p[a]) {
                         int t = p[a];
                         p[a] = p[b];
@@ -569,26 +589,6 @@ public class ColorLinker {
             }
         }
         return false;
-    }
-
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-        int gridSize = Integer.parseInt(sc.nextLine());
-        int penalty = Integer.parseInt(sc.nextLine());
-        String[] grid = new String[gridSize];
-        for (int i = 0; i < gridSize; i++) {
-            grid[i] = sc.nextLine();
-        }
-        ColorLinker cl = new ColorLinker();
-        int[] ret = cl.link(grid, penalty);
-        System.out.println(ret.length);
-        for (int i = 0; i < ret.length; i++) {
-            System.out.println(ret[i]);
-        }
-        System.out.flush();
     }
 }
 

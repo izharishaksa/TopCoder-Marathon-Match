@@ -1,4 +1,4 @@
-package stringconnectivity;
+package StringConnectivity;
 
 import java.io.File;
 import java.io.FileOutputStream;

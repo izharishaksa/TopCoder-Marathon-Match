@@ -1,8 +1,6 @@
-package Solution;
+package ImageScanner;
 
 import java.util.*;
-import java.io.*;
-import java.security.*;
 
 /**
  * Image Scanner, TCO11 Round 1

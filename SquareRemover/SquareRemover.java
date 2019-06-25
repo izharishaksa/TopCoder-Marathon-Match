@@ -1,3 +1,4 @@
+package SquareRemover;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -8,7 +9,6 @@ import java.util.Random;
 import java.util.Scanner;
 
 /**
- *
  * @author Izhari Ishak Aksa
  */
 public class SquareRemover {
@@ -26,6 +26,23 @@ public class SquareRemover {
     Random rand;
     PriorityQueue<State> candidate;
     PriorityQueue<State> newCan;
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int colors = Integer.parseInt(sc.nextLine());
+        int N = Integer.parseInt(sc.nextLine());
+        String[] board = new String[N];
+        for (int i = 0; i < N; i++) {
+            board[i] = sc.nextLine();
+        }
+        int startSeed = Integer.parseInt(sc.nextLine());
+        SquareRemover sr = new SquareRemover();
+        int[] ret = sr.playIt(colors, board, startSeed);
+        for (int i : ret) {
+            System.out.println(i);
+        }
+        System.out.flush();
+    }
 
     void init(int c, String[] b) {
         N = b.length;
@@ -252,7 +269,7 @@ public class SquareRemover {
                                 || (atas == bb && atas == gg && atas == kk) || (atas == ff && atas == kk && atas == bb)) {
                             cur += 90;
                         }
-                        //1 move left                        
+                        //1 move left
                         if ((bawah == gg && bawah == hh && bawah == ll) || (bawah == kk && bawah == ll && bawah == hh)
                                 || (bawah == bb && bawah == gg && bawah == cc) || (bawah == ff && bawah == kk && bawah == cc)
                                 || (bawah == hh && bawah == jj && bawah == bb) || (bawah == jj && bawah == ll && bawah == ff)
@@ -390,23 +407,6 @@ public class SquareRemover {
             System.setErr(ps);
         } catch (Exception e) {
         }
-    }
-
-    public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-        int colors = Integer.parseInt(sc.nextLine());
-        int N = Integer.parseInt(sc.nextLine());
-        String[] board = new String[N];
-        for (int i = 0; i < N; i++) {
-            board[i] = sc.nextLine();
-        }
-        int startSeed = Integer.parseInt(sc.nextLine());
-        SquareRemover sr = new SquareRemover();
-        int[] ret = sr.playIt(colors, board, startSeed);
-        for (int i : ret) {
-            System.out.println(i);
-        }
-        System.out.flush();
     }
 }
 

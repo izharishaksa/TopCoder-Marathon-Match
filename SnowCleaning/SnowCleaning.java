@@ -1,4 +1,4 @@
-package snowcleaning;
+package SnowCleaning;
 
 import java.util.ArrayList;
 import java.util.Arrays;

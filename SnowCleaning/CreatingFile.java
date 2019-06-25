@@ -1,9 +1,8 @@
-package snowcleaning;
+package SnowCleaning;
 
 import java.io.PrintWriter;
 
 /**
- *
  * @author Izhari Ishak Aksa
  */
 public class CreatingFile {

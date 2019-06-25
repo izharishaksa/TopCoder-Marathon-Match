@@ -1,3 +1,4 @@
+package CollageMaker;
 
 import java.io.File;
 import java.io.FileOutputStream;

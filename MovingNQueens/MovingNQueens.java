@@ -1,3 +1,4 @@
+package MovingNQueens;
 
 import java.io.File;
 import java.io.FileOutputStream;

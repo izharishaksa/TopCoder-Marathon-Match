@@ -1,11 +1,10 @@
-package snowcleaning;
+package SnowCleaning;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 
 /**
- *
  * @author Izhari Ishak Aksa
  */
 public class RunTestCases {

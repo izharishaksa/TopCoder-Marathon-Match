@@ -1,27 +1,47 @@
+package PegJumping;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Stack;
-import java.util.List;
-import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Scanner;
+import java.util.*;
 
 /**
- *
  * @author izharishaksa
  */
 public class PegJumping {
 
     static long TIME_LIMIT = 14500;
+    final char[] SIGN = new char[]{'U', 'R', 'D', 'L'};
     long TIMEOUT = System.currentTimeMillis() + TIME_LIMIT;
     int SIZE;
     int[][] b;
     int[] value;
+    int nPeg = 0;
+    int[][] dir = new int[][]{{-2, 0}, {0, 2}, {2, 0}, {0, -2}};
+    int[][] prev = new int[][]{{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
+    PriorityQueue<State> newStates;
+    Map<State, Boolean> map;
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int M = Integer.parseInt(sc.nextLine());
+        int[] value = new int[M];
+        for (int i = 0; i < M; i++) {
+            value[i] = Integer.parseInt(sc.nextLine());
+        }
+        int N = Integer.parseInt(sc.nextLine());
+        String[] board = new String[N];
+        for (int i = 0; i < N; i++) {
+            board[i] = sc.nextLine();
+        }
+        PegJumping pj = new PegJumping();
+        String[] ret = pj.getMoves(value, board);
+        System.out.println(ret.length);
+        for (String s : ret) {
+            System.out.println(s);
+        }
+        System.out.flush();
+    }
 
     Sequence doIt(int i, int j, int lastRow, int lastCol, String paths, int sc) {
         Sequence ret = new Sequence();
@@ -118,8 +138,6 @@ public class PegJumping {
         return ret;
     }
 
-    int nPeg = 0;
-
     void init(int[] v, String[] board) {
         value = new int[v.length];
         System.arraycopy(v, 0, value, 0, value.length);
@@ -144,10 +162,6 @@ public class PegJumping {
             System.err.println();
         }
     }
-
-    int[][] dir = new int[][]{{-2, 0}, {0, 2}, {2, 0}, {0, -2}};
-    int[][] prev = new int[][]{{-1, 0}, {0, 1}, {1, 0}, {0, -1}};
-    final char[] SIGN = new char[]{'U', 'R', 'D', 'L'};
 
     void modify(int curRow, int curCol, int[][] tempB, Sequence seq, State curStates) {
         for (int i = 0; i < 4; i++) {
@@ -276,9 +290,6 @@ public class PegJumping {
             }
         }
     }
-
-    PriorityQueue<State> newStates;
-    Map<State, Boolean> map;
 
     public String[] getMoves(int[] v, String[] board) {
         debug();
@@ -433,27 +444,6 @@ public class PegJumping {
             System.setErr(ps);
         } catch (Exception e) {
         }
-    }
-
-    public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-        int M = Integer.parseInt(sc.nextLine());
-        int[] value = new int[M];
-        for (int i = 0; i < M; i++) {
-            value[i] = Integer.parseInt(sc.nextLine());
-        }
-        int N = Integer.parseInt(sc.nextLine());
-        String[] board = new String[N];
-        for (int i = 0; i < N; i++) {
-            board[i] = sc.nextLine();
-        }
-        PegJumping pj = new PegJumping();
-        String[] ret = pj.getMoves(value, board);
-        System.out.println(ret.length);
-        for (String s : ret) {
-            System.out.println(s);
-        }
-        System.out.flush();
     }
 
 }

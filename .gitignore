@@ -8,3 +8,4 @@
 *.txt
 *.mf
 *.xls*
+.DS_Store
